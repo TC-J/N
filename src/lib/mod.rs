@@ -1,30 +1,37 @@
 use pest::{iterators::Pair, Parser};
 use pest_derive::Parser;
+use std::fmt::Debug;
+use std::ops::{Add, Mul};
+use std::str::FromStr;
 
 #[derive(Parser)]
 #[grammar = "n.pest"]
 pub struct N;
 
 #[derive(Debug)]
-pub struct Tensor {
+pub struct Tensor<T: Add + Mul + FromStr> {
     rank: usize,
     shape: Vec<usize>,
     dimensions: usize,
-    value: Vec<String>,
+    value: Vec<T>,
 }
 
-pub fn parse_tensor(s: &'static str) -> Tensor {
+pub fn parse_tensor<T: Add + Mul + FromStr + Debug>(s: &'static str) -> Tensor<T>
+where
+    <T as FromStr>::Err: Debug,
+{
     let mut n = N::parse(Rule::tensor, s).unwrap();
     let mut shape: Vec<usize> = Vec::new();
-    let mut value: Vec<String> = Vec::new();
-    println!("{:?}", n);
+    let mut value: Vec<T> = Vec::new();
 
-    fn parse_value(
+    fn parse_value<U: Add + Mul + std::str::FromStr + Debug>(
         pair: Pair<Rule>,
         depth: isize,
         shape: &mut Vec<usize>,
-        value: &mut Vec<String>,
-    ) {
+        value: &mut Vec<U>,
+    ) where
+        <U as FromStr>::Err: Debug,
+    {
         match pair.as_rule() {
             Rule::tensor => {
                 println!("depth: {}", depth);
@@ -42,9 +49,7 @@ pub fn parse_tensor(s: &'static str) -> Tensor {
             }
 
             Rule::scalar => {
-                println!("A");
-                value.push(pair.as_str().to_string());
-                println!("B");
+                value.push(pair.as_str().parse().unwrap());
             }
 
             _ => {}
@@ -63,13 +68,10 @@ pub fn parse_tensor(s: &'static str) -> Tensor {
     } else {
         dimensions = value.len();
     }
+
     shape.push(dimensions);
 
-    println!("shape-pre: {:?}", shape);
     let rank = shape.len() - 1;
-    println!("rank: {}", rank);
-    println!("shape: {:?}", shape);
-    println!("value: {:?}", value);
 
     Tensor {
         rank,
@@ -85,16 +87,17 @@ mod tests {
 
     #[test]
     fn test_parse_tensor_scalar() {
-        let t = parse_tensor("[123]");
+        let t = parse_tensor::<i32>("[123]");
         assert_eq!(t.dimensions, 1);
         assert_eq!(t.shape, [1]);
         assert_eq!(t.rank, 0);
         assert_eq!(t.value.len(), 1);
+        assert_eq!(t.value[0], 123);
     }
 
     #[test]
     fn test_parse_tensor_higher_rank() {
-        let t = parse_tensor("[[1,2,3], [3,4,5], [6,7,8]]");
+        let t = parse_tensor::<f64>("[[1,2,3], [3,4,5], [6,7,8]]");
         assert_eq!(t.dimensions, 3);
         assert_eq!(t.shape, [3, 3]);
         assert_eq!(t.rank, 1);
