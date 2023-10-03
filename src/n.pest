@@ -1,0 +1,11 @@
+space = _{ WHITE_SPACE* }
+
+sep = _{ space ~ "," ~ space }
+
+scalar = @{ (NUMBER | "." | "-")+ }
+
+value = _{ (scalar | tensor) }
+
+content = _{ space ~ value ~ (sep ~ value)* ~ space }
+
+tensor = { "[" ~ content ~ "]" }

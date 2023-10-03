@@ -1,0 +1,16 @@
+[package]
+name = "n"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "nrs"
+path = "src/main.rs"
+
+[lib]
+name = "n"
+path = "src/lib/mod.rs"
+
+[dependencies]
+pest = "2.6"
+pest_derive = "2.6"
