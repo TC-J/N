@@ -37,3 +37,5 @@ macro_rules! tensor {
         Tensor::<$t>::from(stringify!($v))
     };
 }
+
+pub use tensor;

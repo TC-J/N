@@ -1,7 +1,7 @@
-use n::{tensor, Tensor};
+use n::{tensor::tensor, tensor::Tensor};
 
 pub fn to_str(v: [u32; 2]) {
-    println!("{}",);
+    println!("{:?}", v);
 }
 
 fn main() {
