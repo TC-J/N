@@ -7,7 +7,7 @@ use pest_derive::Parser;
 #[grammar = "n.pest"]
 pub struct N;
 
-pub(crate) fn parse_tensor<T: Field>(s: &str) -> Tensor<T> {
+pub fn parse_tensor<T: Field>(s: &str) -> Tensor<T> {
     let mut n = N::parse(Rule::tensor, s).unwrap();
     let mut shape: Vec<usize> = Vec::new();
     let mut value: Vec<T> = Vec::new();
@@ -56,12 +56,115 @@ pub(crate) fn parse_tensor<T: Field>(s: &str) -> Tensor<T> {
 
     shape.push(dimensions);
 
-    let rank = shape.len();
+    let mut rank = shape.len();
+
+    if dimensions == 1 || (rank == 2 && shape[0] == 1) {
+        rank -= 1;
+    }
 
     Tensor {
         rank,
         shape,
         dimensions,
         value,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{parse_tensor, Tensor};
+    use crate::tensor;
+
+    #[test]
+    fn test_parse_tensor_scalar() {
+        let t = parse_tensor::<i32>("[123]");
+        assert_eq!(t.dimensions, 1);
+        assert_eq!(t.shape, [1]);
+        assert_eq!(t.rank, 0);
+        assert_eq!(t.value.len(), 1);
+        assert_eq!(t.value[0], 123);
+    }
+
+    #[test]
+    fn test_parse_row_vector() {
+        let v = parse_tensor::<f64>("[[1, 2, 3]]");
+        assert_eq!(v.dimensions, 3);
+        assert_eq!(v.shape, [1, 3]);
+        assert_eq!(v.rank, 1);
+        assert_eq!(v.value.len(), 3);
+    }
+
+    #[test]
+    fn test_parse_column_vector_hint_is_excused_error() {
+        let col_v = parse_tensor::<i64>("[[1], [2], [3]]");
+        assert_eq!(col_v.dimensions, 1);
+        assert_eq!(col_v.rank, 1);
+        assert_eq!(col_v.shape, [3, 1]);
+        assert_eq!(col_v.value.len(), 3);
+    }
+
+    #[test]
+    fn test_parse_tensor_higher_rank() {
+        let t = parse_tensor::<f64>("[[1,2,3], [3,4,5], [6,7,8]]");
+        assert_eq!(t.dimensions, 3);
+        assert_eq!(t.shape, [3, 3]);
+        assert_eq!(t.rank, 2);
+        assert_eq!(t.value, [1., 2., 3., 3., 4., 5., 6., 7., 8.]);
+    }
+
+    #[test]
+    fn test_tensor_with_several_indices() {
+        let t = parse_tensor::<f32>(
+            "[
+            [
+                [
+                    [
+                        [[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]],
+                        [[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]]
+                    ],
+                    [
+                        [[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]],
+                        [[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]]
+                    ]
+                ],
+                [
+                    [
+                        [[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]],
+                        [[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]]
+                    ],
+                    [
+                        [[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]],
+                        [[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]]
+                    ]
+                ]
+            ],
+            [
+                [
+                    [
+                        [[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]],
+                        [[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]]
+                    ],
+                    [
+                        [[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]],
+                        [[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]]
+                    ]
+                ],
+                [
+                    [
+                        [[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]],
+                        [[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]]
+                    ],
+                    [
+                        [[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]],
+                        [[1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1], [1, 1, 1, 1]]
+                    ]
+                ]
+            ]
+        ]",
+        ); // shape (2, 2, 2, 2, 4, 4)
+        assert_eq!(t.rank, 6);
+        assert_eq!(t.dimensions, 4);
+        assert_eq!(t.shape, [2, 2, 2, 2, 4, 4]);
+        assert_eq!(t.value.len(), 2 * 2 * 2 * 2 * 4 * 4);
     }
 }

@@ -1,4 +1,4 @@
-space = _{ WHITE_SPACE* }
+space = _{ (WHITE_SPACE | "\\")* }
 
 sep = _{ space ~ "," ~ space }
 
@@ -8,4 +8,4 @@ value = _{ (scalar | tensor) }
 
 content = _{ space ~ value ~ (sep ~ value)* ~ space }
 
-tensor = { "[" ~ content ~ "]" }
+tensor = { space ~ "[" ~ content ~ "]" ~ space }
