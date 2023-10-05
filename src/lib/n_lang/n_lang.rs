@@ -41,7 +41,7 @@ pub fn parse_tensor<T: Field>(s: &str) -> Tensor<T> {
         }
     }
     parse_value(n.next().unwrap(), 0, &mut shape, &mut value);
-    let dimensions;
+    let mut dimensions;
 
     if shape.len() != 0 {
         dimensions = value.len() / shape.last().unwrap();
@@ -60,6 +60,16 @@ pub fn parse_tensor<T: Field>(s: &str) -> Tensor<T> {
 
     if dimensions == 1 || (rank == 2 && shape[0] == 1) {
         rank -= 1;
+    }
+
+    let shape_len = shape.len();
+
+    if shape.len() > 1 {
+        if shape[shape_len - 1] == 1 || shape[shape_len - 2] == 1 {
+            let row = shape[shape_len - 1];
+            let col = shape[shape_len - 2];
+            dimensions = std::cmp::max(row, col);
+        }
     }
 
     Tensor {
@@ -95,9 +105,9 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_column_vector_hint_is_excused_error() {
+    fn test_parse_column_vector() {
         let col_v = parse_tensor::<i64>("[[1], [2], [3]]");
-        assert_eq!(col_v.dimensions, 1);
+        assert_eq!(col_v.dimensions, 3);
         assert_eq!(col_v.rank, 1);
         assert_eq!(col_v.shape, [3, 1]);
         assert_eq!(col_v.value.len(), 3);

@@ -50,8 +50,8 @@ mod tests {
     use super::{tensor, Tensor};
 
     #[test]
-    fn test_parse_tensor_scalar() {
-        let t = Tensor::<i32>::from("[123]");
+    fn test_scalar_rank_0_tensor() {
+        let t = tensor!(i32, [123]);
         assert_eq!(t.dimensions, 1);
         assert_eq!(t.shape, [1]);
         assert_eq!(t.rank, 0);
@@ -60,7 +60,7 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_row_vector() {
+    fn test_row_vector_rank_1_tensor() {
         let v = tensor!([[1, 2, 3]]);
         assert_eq!(v.dimensions, 3);
         assert_eq!(v.shape, [1, 3]);
@@ -69,16 +69,16 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_column_vector_hint_is_excused_error() {
+    fn test_column_vector_rank_1_tensor() {
         let col_v = tensor!([[1], [2], [3]]);
-        assert_eq!(col_v.dimensions, 1);
+        assert_eq!(col_v.dimensions, 3);
         assert_eq!(col_v.rank, 1);
         assert_eq!(col_v.shape, [3, 1]);
         assert_eq!(col_v.value.len(), 3);
     }
 
     #[test]
-    fn test_parse_tensor_higher_rank() {
+    fn test_matrix_rank_2_tensor() {
         let t = Tensor::<f64>::from("[[1,2,3], [3,4,5], [6,7,8]]");
         assert_eq!(t.dimensions, 3);
         assert_eq!(t.shape, [3, 3]);
@@ -87,7 +87,7 @@ mod tests {
     }
 
     #[test]
-    fn test_tensor_with_several_indices() {
+    fn test_rank_6_tensor() {
         let t = tensor!([
             [
                 [
