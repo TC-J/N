@@ -1,4 +1,4 @@
-space = _{ (WHITE_SPACE | "\\")* }
+space = _{ WHITE_SPACE* }
 
 sep = _{ space ~ "," ~ space }
 

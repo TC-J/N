@@ -82,8 +82,7 @@ pub fn parse_tensor<T: Field>(s: &str) -> Tensor<T> {
 
 #[cfg(test)]
 mod tests {
-    use super::{parse_tensor, Tensor};
-    use crate::tensor;
+    use super::parse_tensor;
 
     #[test]
     fn test_parse_tensor_scalar() {
